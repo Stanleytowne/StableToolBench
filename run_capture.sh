@@ -12,7 +12,7 @@ MODEL_PATH=${MODEL_PATH:-"ToolBench/ToolLLaMA-2-7b-v2"}
 INPUT_QUERY_FILE=${INPUT_QUERY_FILE:-"solvable_queries_example/test_instruction/G1_instruction.json"}
 OUTPUT_FILE=${OUTPUT_FILE:-"captured_conversation.json"}
 
-python capture_first_query.py \
+python toolbench/inference/capture_first_query.py \
     --tool_root_dir "$TOOL_ROOT_DIR" \
     --model_path "$MODEL_PATH" \
     --input_query_file "$INPUT_QUERY_FILE" \
