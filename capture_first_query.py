@@ -10,10 +10,35 @@ import json
 import argparse
 from termcolor import colored
 
-# 添加路径
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# 获取StableToolBench根目录（脚本所在目录的父目录）
+# 如果脚本在StableToolBench目录下，current_dir就是根目录
+# 如果脚本在StableToolBench子目录下，需要向上查找
+current_file = os.path.abspath(__file__)
+current_dir = os.path.dirname(current_file)
 
-from toolbench.inference.Downstream_tasks.rapidapi import pipeline_runner
+# 检查是否在StableToolBench根目录下（通过查找toolbench目录）
+if os.path.exists(os.path.join(current_dir, 'toolbench')):
+    toolbench_root = current_dir
+elif os.path.exists(os.path.join(current_dir, '..', 'toolbench')):
+    toolbench_root = os.path.dirname(current_dir)
+else:
+    # 尝试从环境变量获取
+    toolbench_root = os.environ.get('STABLETOOLBENCH_ROOT', current_dir)
+    print(colored(f"[Warning] Could not find toolbench directory, using: {toolbench_root}", "yellow"))
+
+# 设置PYTHONPATH - 这是关键！StableToolBench需要PYTHONPATH设置为根目录
+os.environ['PYTHONPATH'] = toolbench_root + os.pathsep + os.environ.get('PYTHONPATH', '')
+sys.path.insert(0, toolbench_root)
+
+# 切换到toolbench根目录（某些相对导入可能需要）
+original_cwd = os.getcwd()
+os.chdir(toolbench_root)
+
+try:
+    from toolbench.inference.Downstream_tasks.rapidapi import pipeline_runner
+finally:
+    # 恢复原始工作目录
+    os.chdir(original_cwd)
 
 
 class ConversationCapture:
@@ -168,12 +193,12 @@ class ConversationCapture:
 
 def main():
     parser = argparse.ArgumentParser(description='Capture first query conversation from StableToolBench')
-    parser.add_argument('--tool_root_dir', type=str, required='data/toolenv/tools', help='Tool root directory')
+    parser.add_argument('--tool_root_dir', type=str, default='data/toolenv/tools', help='Tool root directory')
     parser.add_argument('--backbone_model', type=str, default="toolllama", help='Backbone model')
     parser.add_argument('--model_path', type=str, default='ToolBench/ToolLLaMA-2-7b-v2', help='Model path')
     parser.add_argument('--max_observation_length', type=int, default=1024, help='Max observation length')
     parser.add_argument('--method', type=str, default="CoT@1", help='Method')
-    parser.add_argument('--input_query_file', type=str, required='StableToolBench/solvable_queries_example/test_instruction/G1_instruction.json', help='Input query file')
+    parser.add_argument('--input_query_file', type=str, default='solvable_queries_example/test_instruction/G1_instruction.json', help='Input query file')
     parser.add_argument('--output_file', type=str, default="captured_conversation.json", help='Output file')
     parser.add_argument('--max_sequence_length', type=int, default=8192, help='Max sequence length')
     parser.add_argument('--max_source_sequence_length', type=int, default=4096, help='Max source sequence length')
@@ -184,6 +209,24 @@ def main():
     
     # 设置环境变量
     os.environ['SERVICE_URL'] = args.service_url
+    
+    # 确保路径是绝对路径（相对于toolbench_root）
+    if not os.path.isabs(args.tool_root_dir):
+        args.tool_root_dir = os.path.join(toolbench_root, args.tool_root_dir)
+    if not os.path.isabs(args.input_query_file):
+        args.input_query_file = os.path.join(toolbench_root, args.input_query_file)
+    if not os.path.isabs(args.model_path) and not args.model_path.startswith('ToolBench/'):
+        # 如果是相对路径，尝试在toolbench_root下查找
+        potential_path = os.path.join(toolbench_root, args.model_path)
+        if os.path.exists(potential_path):
+            args.model_path = potential_path
+    
+    print(colored(f"[Config] ToolBench root: {toolbench_root}", "cyan"))
+    print(colored(f"[Config] Tool root dir: {args.tool_root_dir}", "cyan"))
+    print(colored(f"[Config] Input query file: {args.input_query_file}", "cyan"))
+    print(colored(f"[Config] Model path: {args.model_path}", "cyan"))
+    print(colored(f"[Config] Service URL: {args.service_url}", "cyan"))
+    print(colored(f"[Config] PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}", "cyan"))
     
     # 创建捕获器
     capture = ConversationCapture(output_file=args.output_file)

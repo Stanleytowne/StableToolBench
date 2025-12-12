@@ -11,16 +11,43 @@
 
 ## 使用方法
 
-### 基本用法
+### 方法1: 使用便捷脚本（推荐）
 
 ```bash
 cd StableToolBench
+./run_capture.sh
+```
+
+或者指定参数：
+```bash
+cd StableToolBench
+TOOL_ROOT_DIR="data/toolenv/tools" \
+MODEL_PATH="ToolBench/ToolLLaMA-2-7b-v2" \
+INPUT_QUERY_FILE="solvable_queries_example/test_instruction/G1_instruction.json" \
+./run_capture.sh
+```
+
+### 方法2: 直接运行Python脚本
+
+**重要**: 必须在StableToolBench根目录下运行，并设置PYTHONPATH：
+
+```bash
+cd StableToolBench
+export PYTHONPATH=./
 python capture_first_query.py \
     --tool_root_dir data/toolenv/tools \
     --model_path ToolBench/ToolLLaMA-2-7b-v2 \
-    --input_query_file solvable_queries/test_instruction/G1_instruction.json \
+    --input_query_file solvable_queries_example/test_instruction/G1_instruction.json \
     --output_file captured_conversation.json \
     --service_url http://localhost:8080/virtual
+```
+
+### 方法3: 使用默认参数（最简单）
+
+```bash
+cd StableToolBench
+export PYTHONPATH=./
+python capture_first_query.py
 ```
 
 ### 参数说明
@@ -95,7 +122,27 @@ python capture_first_query.py \
 
 ## 注意事项
 
-1. 确保ToolBench服务器正在运行（如果使用virtual模式）
-2. 脚本只会处理第一个query，用于格式检查
-3. 输出的对话格式与StableToolBench数据格式一致
-4. 可以用于验证模型输入输出格式是否正确
+1. **必须在StableToolBench根目录下运行**，或者设置正确的PYTHONPATH
+2. 确保ToolBench服务器正在运行（如果使用virtual模式）
+3. 脚本只会处理第一个query，用于格式检查
+4. 输出的对话格式与StableToolBench数据格式一致
+5. 可以用于验证模型输入输出格式是否正确
+
+## 常见问题
+
+### Q: ModuleNotFoundError: No module named 'Tree'
+
+**原因**: PYTHONPATH未正确设置
+
+**解决方法**:
+1. 确保在StableToolBench根目录下运行
+2. 设置 `export PYTHONPATH=./`
+3. 或使用提供的 `run_capture.sh` 脚本
+
+### Q: 找不到输入文件
+
+**原因**: 文件路径不正确
+
+**解决方法**: 
+- 使用绝对路径
+- 或确保相对路径相对于StableToolBench根目录
