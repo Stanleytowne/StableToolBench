@@ -22,6 +22,8 @@ import re
 config_file='config_mirrorapi_cache.yml'
 CONFIG = yaml.load(open(config_file, 'r'), Loader=yaml.FullLoader)
 print(CONFIG)
+CACHE_FOLDER = CONFIG['cache_folder']
+
 
 from openai import OpenAI, AzureOpenAI
 if 'api_base' in CONFIG:
@@ -91,8 +93,29 @@ def get_virtual_response(request: Request, info: Info):
             response_dict = {"error": f"Tool input parse error...\n", "response": ""}
             return response_dict
 
+    if not os.path.exists(CACHE_FOLDER):
+        os.mkdir(CACHE_FOLDER)
 
-
+    # --------------------------------------------------------------------------------------------------------------
+    # load from cache
+    cache = {}
+    # prerequisite: to read files correctly, "my_tools_cache" folder and "toolenv/tools/" folder should be available
+    try:
+        if os.path.exists(os.path.join(CACHE_FOLDER, standard_category)):
+            if os.path.exists(os.path.join(CACHE_FOLDER, standard_category, tool_name)):
+                if os.path.exists(os.path.join(CACHE_FOLDER, standard_category, tool_name, api_name+".json")):
+                    tools_cache_record = json.load(open(os.path.join(CACHE_FOLDER, standard_category, tool_name, api_name+".json"), "r"))
+                    cache.update(tools_cache_record)
+                    if str(tool_input) in cache:
+                        print("using cached real response")
+                        response_dict = cache[str(tool_input)]
+                        write_log(request=info, response=response_dict, type="cached_real_response")
+                        return response_dict
+    except Exception as e:
+        print(f"Loading cache error: {e}")
+    
+    # --------------------------------------------------------------------------------------------------------------
+        
     
     if "_for_" in tool_name_original:
         tool_name_real = tool_name_original.split("_for_")[0]
@@ -108,12 +131,7 @@ def get_virtual_response(request: Request, info: Info):
     }
     
 
-
-    """
-    Fake response function here. 
-    result = fake_response_function(api_doc, api_name, api_parameters, *kwargs)
-    """
-
+    # simulate api calls using trained models
     # parse api_doc
     tool_name_original = standardize(tool_name_original)
     api_name = standardize(api_name)
@@ -257,7 +275,7 @@ Request:
         "tool_name": data['tool_name'],
         "tool_category": data['category'],
     }
-    print(f"api_doc: {api_doc}")
+
     request = {**tool_input}
     if 'toolbench_key' in request:
         request.pop('toolbench_key')

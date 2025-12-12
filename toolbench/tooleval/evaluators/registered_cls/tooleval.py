@@ -97,9 +97,12 @@ class OpenAINormalizedEvaluator(ToolEvalEvaluator):
             'role':'user',
             'content':str(self.parsed_function_templates[func_name]).format(**func_args)
         }]
-                    
+
         res = self.opr.request(**completion_kwargs)
-        ret = json.loads(res.choices[0].message.tool_calls[0].function.arguments)
+        try:
+            ret = json.loads(res.choices[0].message.tool_calls[0].function.arguments)
+        except json.decoder.JSONDecodeError:
+            ret = {'answer_status': 'Unsolved', 'reason': ''}
         # check required items
         required_args = getattr(func_description['parameters'],'required',None)
         if required_args is not None:
@@ -111,7 +114,7 @@ class OpenAINormalizedEvaluator(ToolEvalEvaluator):
         if return_content:
             ret['content'] = dict(res.choices[0].message).get('content','')
         return ret
-    
+
     def select_best_final_answer(self,query,final_answers:List[str])->int:
         hashed_ans = list(map(hash,final_answers))
         all_same = True

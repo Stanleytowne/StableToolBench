@@ -91,6 +91,8 @@ def get_virtual_response(request: Request, info: Info):
             response_dict = {"error": f"Tool input parse error...\n", "response": ""}
             return response_dict
 
+
+
     
     if "_for_" in tool_name_original:
         tool_name_real = tool_name_original.split("_for_")[0]
@@ -106,7 +108,9 @@ def get_virtual_response(request: Request, info: Info):
     }
 
 
+
     """
+    Fake response function here. 
     result = fake_response_function(api_doc, api_name, api_parameters, *kwargs)
     """
 
@@ -144,6 +148,7 @@ def get_virtual_response(request: Request, info: Info):
         
     result = fake_response_function_with_trained_simulator(tool_input, data, api_doc)
     print(f"fake result: {result}")
+
 
     if not isinstance(result, dict):
         return json.loads(result)
@@ -278,7 +283,7 @@ Request:
 
     model = CONFIG.get('model', 'simulation-250123-qwen25-mixed')
     model = model.split("/")[-1]
-
+    
     _, error, response = extract_attributes_json(generate_text)
     if error or response:
         return json.dumps({"error": error, "response": response})
