@@ -109,7 +109,6 @@ def get_virtual_response(request: Request, info: Info):
                     if str(tool_input) in cache:
                         print("using cached real response")
                         response_dict = cache[str(tool_input)]
-                        write_log(request=info, response=response_dict, type="cached_real_response")
                         return response_dict
     except Exception as e:
         print(f"Loading cache error: {e}")
