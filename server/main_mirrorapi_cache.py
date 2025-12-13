@@ -69,10 +69,11 @@ def prepare_tool_name_and_url(info):
 def get_virtual_response(request: Request, info: Info):
     user_key = info.toolbench_key
 
-    print(info)
-    print(request)
+    print(f"[DEBUG] Received request: category={info.category}, tool_name={info.tool_name}, api_name={info.api_name}")
+    print(f"[DEBUG] Full info: {info}")
     
     tool_name, standard_category, api_name, code_string = prepare_tool_name_and_url(info)
+    print(f"[DEBUG] After prepare_tool_name_and_url: tool_name={tool_name}, standard_category={standard_category}, api_name={api_name}")
     tool_input = info.tool_input
     tool_name_original = info.tool_name
 
@@ -152,16 +153,24 @@ def get_virtual_response(request: Request, info: Info):
                 # check invalid api name
                 if len(api_info) == 0:
                     print("cant match api name")
+                    # Return error response if API name cannot be matched
+                    return {"error": f"Cannot match API name: {api_name}. Please check if the API exists in the tool definition.", "response": ""}
                 api_doc = {
                     'tool_description': tool_description,
                     'api_info': api_info
                 }
             else:
                 print(f"cant get {tool_name_original}")
+                # Return error response if tool file doesn't exist
+                return {"error": f"Cannot find tool definition file for: {tool_name_original}", "response": ""}
     except Exception as e:
         print(f"Loading api_doc error: {e}")
+        # Return error response if there's an exception loading api_doc
+        return {"error": f"Error loading API documentation: {str(e)}", "response": ""}
 
-
+    # Additional check: ensure api_info is not empty before calling the function
+    if not api_doc.get('api_info') or len(api_doc['api_info']) == 0:
+        return {"error": f"API information is empty for API: {api_name}", "response": ""}
         
     result = fake_response_function_with_trained_simulator(tool_input, data, api_doc, api_name)
     print(f"fake result: {result}")
@@ -256,6 +265,12 @@ def fake_response_function_with_trained_simulator(tool_input, data, api_doc, api
     api_doc: dict, api document
     '''
     from system_prompts import SFT_SYSTEM
+
+    # Check if api_info exists and is not empty
+    if not api_doc.get('api_info') or len(api_doc['api_info']) == 0:
+        error_msg = f"API information is empty for API: {api_name}"
+        print(f"Error in fake_response_function_with_trained_simulator: {error_msg}")
+        return json.dumps({"error": error_msg, "response": ""})
 
     USER_PROMPT = """\
 API doc:
