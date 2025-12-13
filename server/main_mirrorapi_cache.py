@@ -134,7 +134,9 @@ def get_virtual_response(request: Request, info: Info):
     # simulate api calls using trained models
     # parse api_doc
     tool_name_original = standardize(tool_name_original)
-    api_name = standardize(api_name)
+    # Note: api_name from prepare_tool_name_and_url already has change_name(standardize(...)) applied
+    # But we need to ensure it's properly standardized for matching
+    # The api_name from prepare_tool_name_and_url is already processed, so we don't need to re-process it
     api_doc = {
         'tool_description': "",
         'api_info': "",
@@ -147,14 +149,20 @@ def get_virtual_response(request: Request, info: Info):
                 # get tool_dexcription and api_info
                 tool_description = api_intro['tool_description']
                 api_info = []
+                available_api_names = []
                 for api in api_intro['api_list']:
-                    if api_name == standardize(api['name']):
+                    # Match using the same normalization as prepare_tool_name_and_url
+                    # which uses change_name(standardize(...))
+                    normalized_api_name = change_name(standardize(api['name']))
+                    available_api_names.append(f"{api['name']} -> {normalized_api_name}")
+                    if api_name == normalized_api_name:
                         api_info.append(api)
                 # check invalid api name
                 if len(api_info) == 0:
-                    print("cant match api name")
+                    print(f"cant match api name: looking for '{api_name}'")
+                    print(f"Available APIs (original -> normalized): {available_api_names[:10]}")
                     # Return error response if API name cannot be matched
-                    return {"error": f"Cannot match API name: {api_name}. Please check if the API exists in the tool definition.", "response": ""}
+                    return {"error": f"Cannot match API name: '{api_name}'. Available APIs (first 5): {[name.split(' -> ')[1] for name in available_api_names[:5]]}", "response": ""}
                 api_doc = {
                     'tool_description': tool_description,
                     'api_info': api_info
