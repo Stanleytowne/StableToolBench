@@ -1,101 +1,120 @@
 import requests
 import json
-import os
 
-url = 'http://0.0.0.0:8080/virtual'
+url = 'http://10.153.48.58:8080/virtual'
 headers = {
     'accept': 'application/json',
     'Content-Type': 'application/json',
 }
 
-# Test cases extracted from StableToolBench data examples
+# Test cases extracted from toolllama_G123_dfs_eval.json with successful API responses
 test_cases = [
     {
-        "name": "Test 1: TTSKraken - List Languages (Original)",
+        "name": "Test 1: Tokopedia - Get sorting methods (successful response)",
         "data": {
-            "category": "Artificial_Intelligence_Machine_Learning",
-            "tool_name": "TTSKraken",
-            "api_name": "List Languages",
-            "tool_input": '{}',
-            "strip": "truncate",
-            "toolbench_key": ""
-        }
-    },
-    {
-        "name": "Test 2: Transfermarkt Search - Search for player",
-        "data": {
-            "category": "Sports",
-            "tool_name": "theclique",
-            "api_name": "transfermarkt_search_for_theclique",
-            "tool_input": json.dumps({"name": "Lionel Messi"}),
+            "category": "eCommerce",
+            "tool_name": "tokopedia_super_api",
+            "api_name": "sortproductsmaster_for_tokopedia_super_api",
+            "tool_input": json.dumps({}),
             "strip": "",
             "toolbench_key": ""
         }
     },
     {
-        "name": "Test 3: Transfermarkt Details - Get player details",
+        "name": "Test 2: Qvantana - Ultimate Oscillator for BTCUSDT",
         "data": {
-            "category": "Sports",
-            "tool_name": "theclique",
-            "api_name": "transfermarkt_details_for_theclique",
+            "category": "Financial",
+            "tool_name": "qvantana",
+            "api_name": "ultimateoscillator_for_qvantana",
             "tool_input": json.dumps({
-                "type_s": "players",
-                "other": "",
-                "id_talent": "",
-                "part_slug": "lionel-messi"
+                "exchange": "binance",
+                "interval": "1d",
+                "market": "spot",
+                "symbol": "btcusdt",
+                "backtracks": 30
             }),
             "strip": "",
             "toolbench_key": ""
         }
     },
     {
-        "name": "Test 4: Kick.com API - Get channel clips",
+        "name": "Test 3: Qvantana - Typical Price for BTCUSDT",
         "data": {
-            "category": "Video, Images",
-            "tool_name": "kick_com_api_kick_api",
-            "api_name": "get_channel_clips_for_kick_com_api_kick_api",
+            "category": "Financial",
+            "tool_name": "qvantana",
+            "api_name": "typical_price_for_qvantana",
             "tool_input": json.dumps({
-                "cursor": "",
-                "channel_name": "gmhikaru"
+                "exchange": "binance",
+                "market": "spot",
+                "symbol": "btcusdt",
+                "interval": "1d",
+                "backtracks": 30
             }),
             "strip": "",
             "toolbench_key": ""
         }
     },
     {
-        "name": "Test 5: Kick.com API - Get channel details",
+        "name": "Test 4: Qvantana - Trix indicator for BTCUSDT",
         "data": {
-            "category": "Video, Images",
-            "tool_name": "kick_com_api_kick_api",
-            "api_name": "get_channel_details_for_kick_com_api_kick_api",
+            "category": "Financial",
+            "tool_name": "qvantana",
+            "api_name": "trix_for_qvantana",
             "tool_input": json.dumps({
-                "channel_name": "gmhikaru"
+                "exchange": "binance",
+                "market": "spot",
+                "symbol": "btcusdt",
+                "interval": "1d",
+                "backtracks": 30
             }),
             "strip": "",
             "toolbench_key": ""
         }
     },
     {
-        "name": "Test 6: Keyword Analysis - Popular sites for query",
+        "name": "Test 5: Twelve Data - MAXINDEX for AAPL",
         "data": {
-            "category": "Search",
-            "tool_name": "keyword_analysis",
-            "api_name": "popularsitesforquery_for_keyword_analysis",
+            "category": "Financial",
+            "tool_name": "twelve_data",
+            "api_name": "maxindex_for_twelve_data",
             "tool_input": json.dumps({
-                "q": "birthday party ideas"
+                "interval": "1day",
+                "symbol": "AAPL",
+                "series_type": "close",
+                "outputsize": 100
             }),
             "strip": "",
             "toolbench_key": ""
         }
     },
     {
-        "name": "Test 7: Keyword Analysis - Query keywords",
+        "name": "Test 6: Twelve Data - MINMAX for AAPL",
         "data": {
-            "category": "Search",
-            "tool_name": "keyword_analysis",
-            "api_name": "querykeywords_for_keyword_analysis",
+            "category": "Financial",
+            "tool_name": "twelve_data",
+            "api_name": "minmax_for_twelve_data",
             "tool_input": json.dumps({
-                "q": "birthday party ideas"
+                "interval": "1day",
+                "symbol": "AAPL",
+                "series_type": "close",
+                "outputsize": 100
+            }),
+            "strip": "",
+            "toolbench_key": ""
+        }
+    },
+    {
+        "name": "Test 7: Twelve Data - TEMA for AAPL",
+        "data": {
+            "category": "Financial",
+            "tool_name": "twelve_data",
+            "api_name": "tema_for_twelve_data",
+            "tool_input": json.dumps({
+                "interval": "1day",
+                "symbol": "AAPL",
+                "series_type": "close",
+                "outputsize": 100,
+                "time_period": 14
             }),
             "strip": "",
             "toolbench_key": ""
