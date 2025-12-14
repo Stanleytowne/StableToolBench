@@ -88,11 +88,10 @@ def prepare_tool_name_and_url(info):
 def get_virtual_response(request: Request, info: Info):
     user_key = info.toolbench_key
 
+    print('#'*30)
     print(f"[DEBUG] Received request: category={info.category}, tool_name={info.tool_name}, api_name={info.api_name}")
-    print(f"[DEBUG] Full info: {info}")
     
     tool_name, standard_category, api_name, code_string = prepare_tool_name_and_url(info)
-    print(f"[DEBUG] After prepare_tool_name_and_url: tool_name={tool_name}, standard_category={standard_category}, api_name={api_name}")
     tool_input = info.tool_input
     tool_name_original = info.tool_name
 
@@ -127,7 +126,7 @@ def get_virtual_response(request: Request, info: Info):
                     tools_cache_record = json.load(open(os.path.join(CACHE_FOLDER, standard_category, tool_name, api_name+".json"), "r"))
                     cache.update(tools_cache_record)
                     if str(tool_input) in cache:
-                        print("using cached real response")
+                        print("[DEBUG] using cached real response")
                         response_dict = cache[str(tool_input)]
                         return response_dict
     except Exception as e:
@@ -178,8 +177,7 @@ def get_virtual_response(request: Request, info: Info):
                         api_info.append(api)
                 # check invalid api name
                 if len(api_info) == 0:
-                    print(f"cant match api name: looking for '{api_name}'")
-                    print(f"Available APIs (original -> normalized): {available_api_names[:10]}")
+                    print(f"[ERROR] cannot match api name: looking for '{api_name}'. Available APIs (original -> normalized): {available_api_names[:10]}...")
                     # Return error response if API name cannot be matched
                     return {"error": f"Cannot match API name: '{api_name}'. Available APIs (first 5): {[name.split(' -> ')[1] for name in available_api_names[:5]]}", "response": ""}
                 api_doc = {
@@ -187,11 +185,11 @@ def get_virtual_response(request: Request, info: Info):
                     'api_info': api_info
                 }
             else:
-                print(f"cant get {tool_name_original}")
+                print(f"[ERROR] cannot get {tool_name_original}")
                 # Return error response if tool file doesn't exist
                 return {"error": f"Cannot find tool definition file for: {tool_name_original}", "response": ""}
     except Exception as e:
-        print(f"Loading api_doc error: {e}")
+        print(f"[ERROR] loading api_doc error: {e}")
         # Return error response if there's an exception loading api_doc
         return {"error": f"Error loading API documentation: {str(e)}", "response": ""}
 
@@ -200,7 +198,7 @@ def get_virtual_response(request: Request, info: Info):
         return {"error": f"API information is empty for API: {api_name}", "response": ""}
         
     result = fake_response_function_with_trained_simulator(tool_input, data, api_doc, api_name)
-    print(f"fake result: {result}")
+    print(f"[DEBUG] Simulated result: {result}")
 
 
     if not isinstance(result, dict):
@@ -246,7 +244,7 @@ def extract_attributes_json(output):
                 response_content = match.group(3)  # Extract response content
                 output_dict = {"error": error_content, "response": response_content}
             else:
-                print("No matches found.")
+                print("[DEBUG] No matches found in the cache.")
                 return None, None, None
         else:
             pattern = r'"error":\s*"([^"]*)",\s*"response":\s*"(.*)'
@@ -258,7 +256,7 @@ def extract_attributes_json(output):
                 response_content = match.group(2)  # Extract response content
                 output_dict = {"error": error_content, "response": response_content}
             else:
-                print("No matches found.")
+                print("[DEBUG] No matches found in the cache.")
                 return None, None, None
     error, response = output_dict['error'], output_dict['response']
     return None, error, response
@@ -321,7 +319,7 @@ Request:
     if 'toolbench_key' in request:
         request.pop('toolbench_key')
     instruction = USER_PROMPT.format(api_doc=api_doc, request=request)
-    print(instruction)
+    print(f"[DEBUG] Instruction: {instruction}")
     messages = [
         {"role": "system", "content": SFT_SYSTEM},
         {"role": "user", "content": instruction},
@@ -349,7 +347,7 @@ Request:
         return json.dumps({"error": error, "response": response})
     else:
         fake_error = {
-            "error": "Failed to generate fake response",
+            "error": "The API call failed. Please try again later.",
             "response": "",
         }
         return json.dumps(fake_error)
