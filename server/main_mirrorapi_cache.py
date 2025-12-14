@@ -54,14 +54,33 @@ def prepare_tool_name_and_url(info):
     standard_category = standard_category.replace("__", "_")
     
     tool_name = info.tool_name
-    api_name = change_name(standardize(info.api_name)).split(f"_for_{tool_name}")[0]
+    # First standardize the tool_name to get the proper format
     if not tool_name.endswith(f"_for_{standard_category}"):
         tool_name = standardize(info.tool_name)
-        code_string = f"""from my_tools.{standard_category}.{tool_name}.api import {api_name}"""
         tool_name += f"_for_{standard_category}"
     else:
-        tmp_tool_name = standardize(tool_name.replace(f"_for_{standard_category}", ""))
-        code_string = f"""from my_tools.{standard_category}.{tmp_tool_name}.api import {api_name}"""
+        tool_name = standardize(tool_name)
+    
+    # Extract tool_name without category suffix for splitting
+    tmp_tool_name = tool_name.replace(f"_for_{standard_category}", "")
+    
+    # Process api_name: remove _for_{tool_name} suffix if present
+    api_name_raw = info.api_name
+    # Try to remove the _for_{tool_name} pattern (with or without category suffix)
+    if f"_for_{tmp_tool_name}" in api_name_raw:
+        api_name = api_name_raw.split(f"_for_{tmp_tool_name}")[0]
+    else:
+        # Try with the original tool_name from info
+        original_tool = standardize(info.tool_name)
+        if f"_for_{original_tool}" in api_name_raw:
+            api_name = api_name_raw.split(f"_for_{original_tool}")[0]
+        else:
+            api_name = api_name_raw
+    
+    # Apply standardization and name changes
+    api_name = change_name(standardize(api_name))
+    
+    code_string = f"""from my_tools.{standard_category}.{tmp_tool_name}.api import {api_name}"""
     return tool_name, standard_category, api_name, code_string
 
 @app.post('/virtual')
