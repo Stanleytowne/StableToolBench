@@ -346,6 +346,9 @@ Request:
     if error or response:
         return json.dumps({"error": error, "response": response})
     else:
+        print("[ERROR] Failed to extract error/response from LLM output:")
+        print(f"[ERROR] Raw LLM output: {generate_text[:500]}...")
+        print(f"[ERROR] Extracted error: {error}, response: {response}")
         fake_error = {
             "error": "The API call failed. Please try again later.",
             "response": "",
