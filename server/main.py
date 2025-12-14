@@ -328,7 +328,7 @@ async def fake_response_function_chat(api_example, tool_input, api_doc):
         }
 
         ### 4. Behavior Rules
-        - **Length Constraints:** - Keep the response **concise and lightweight**. If the API returns a list or array, **limit it to maximum 2-3 items**.
+        - **Length Constraints:** - Keep the response **concise and lightweight**. Keep the entire JSON output shorter than 300 words. Do not generate excessively large payloads. If the API returns a list or array, **limit it to maximum 1-2 items**.
         - **Source of Truth:** Do not blindly copy "API Examples" if they contradict the "API Input". The "API Input" is your priority.
         """
     )
