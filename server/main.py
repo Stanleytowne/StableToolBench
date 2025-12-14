@@ -217,7 +217,6 @@ async def get_virtual_response(request: Request, info: Info):
     debug_print(f"api_doc: {api_doc}")
         
     result = await fake_response_function_chat(api_example,tool_input,api_doc)
-    debug_print(f"fake result: {result}")
 
     if CONFIG['is_save']:
         await save_cache(cache, tool_input, result, standard_category, tool_name, api_name)
