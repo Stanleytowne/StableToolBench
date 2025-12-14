@@ -20,6 +20,27 @@ from tenacity import retry, wait_random_exponential, stop_after_attempt
 
 import textwrap
 import aiofiles
+from colorama import init, Fore, Style
+
+# Initialize colorama for cross-platform color support
+init(autoreset=True)
+
+# Color logging functions
+def debug_print(*args, **kwargs):
+    """Print DEBUG messages in cyan"""
+    print(f"{Fore.CYAN}[DEBUG]{Style.RESET_ALL}", *args, **kwargs)
+
+def error_print(*args, **kwargs):
+    """Print ERROR messages in red"""
+    print(f"{Fore.RED}[ERROR]{Style.RESET_ALL}", *args, **kwargs)
+
+def warn_print(*args, **kwargs):
+    """Print WARN messages in yellow"""
+    print(f"{Fore.YELLOW}[WARN]{Style.RESET_ALL}", *args, **kwargs)
+
+def info_print(*args, **kwargs):
+    """Print INFO messages in green"""
+    print(f"{Fore.GREEN}[INFO]{Style.RESET_ALL}", *args, **kwargs)
 
 config_file='config.yml'
 CONFIG = yaml.load(open(config_file, 'r'), Loader=yaml.FullLoader)
@@ -89,6 +110,9 @@ def prepare_tool_name_and_url(info):
 # @retry(wait=wait_random_exponential(min=1, max=40), stop=stop_after_attempt(1))
 async def get_virtual_response(request: Request, info: Info):
     user_key = info.toolbench_key
+
+    print('#'*30)
+    debug_print(f"Received request: category={info.category}, tool_name={info.tool_name}, api_name={info.api_name}")
     
     tool_name, standard_category, api_name, code_string = prepare_tool_name_and_url(info)
     tool_input = info.tool_input
@@ -106,7 +130,7 @@ async def get_virtual_response(request: Request, info: Info):
         elif isinstance(tool_input, dict):
             tool_input = tool_input
         else:
-            print(f"[ERROR] Can not parse tool input into json: {tool_input}")
+            error_print(f"Can not parse tool input into json: {tool_input}")
             print(type(tool_input))
             print(tool_input)
             response_dict = {"error": f"Tool input parse error...\n", "response": ""}
@@ -125,51 +149,11 @@ async def get_virtual_response(request: Request, info: Info):
                 tools_cache_record = json.loads(content)
                 cache.update(tools_cache_record)
                 if str(tool_input) in cache:
-                    print("[DEBUG] using cached real response")
+                    debug_print("using cached real response")
                     response_dict = cache[str(tool_input)]
                     return response_dict
     except Exception as e:
-        print(f"[ERROR] Loading cache error: {e}")
-        
-    # """
-    # Call the real api before generating fake response
-    # """
-    
-    # headers = {
-    # 'accept': 'application/json',
-    # 'Content-Type': 'application/json',
-    # 'toolbench_key': user_key
-    # }
-    # os.environ['HTTP_PROXY']= ''
-    # if "_for_" in tool_name_original:
-    #     tool_name_real = tool_name_original.split("_for_")[0]
-    # else:
-    #     tool_name_real = tool_name_original
-    # data = {
-    #     "category": standard_category,
-    #     "tool_name": tool_name_real,
-    #     "api_name": api_name,
-    #     "tool_input": tool_input,
-    #     "strip": "",
-    #     "toolbench_key": user_key
-    # }
-    
-    # real_response = requests.post(CONFIG['toolbench_url'], headers=headers, data=json.dumps(data))
-
-    # # Check if the request was successful
-    # if real_response.status_code == 200:
-    #     real_response = real_response.json() 
-    #     if check_result(real_response):
-    #         print("returning real_response")
-    #         write_log(request=info, response=real_response, type="real_response")
-    #         if CONFIG['is_save']:
-    #             save_cache(cache, tool_input, real_response, standard_category, tool_name, api_name)
-    #         return real_response
-
-    """
-    Fake response function here. Use the cached history response for in-context examples.
-    result = fake_response_function(api_doc, api_name, api_parameters, *kwargs)
-    """
+        error_print(f"Loading cache error: {e}")
 
     # parse api_doc
     tool_name_original = standardize(tool_name_original)
@@ -181,7 +165,7 @@ async def get_virtual_response(request: Request, info: Info):
     }
     try:
         tools_json_path = os.path.join(CONFIG['tools_folder'], standard_category, tool_name_original.split("_for_")[0]+".json")
-        print(f"[DEBUG] tools_json_path: {tools_json_path}")
+        debug_print(f"tools_json_path: {tools_json_path}")
         if os.path.exists(tools_json_path):
             # read json (async file I/O)
             async with aiofiles.open(tools_json_path, 'r') as f:
@@ -197,13 +181,10 @@ async def get_virtual_response(request: Request, info: Info):
                 normalized_api_name = change_name(standardize(api['name']))
                 available_api_names.append(f"{api['name']} -> {normalized_api_name}")
                 if api_name == normalized_api_name:
-                    api_info.append({
-                        'name': api['name'],
-                        'description': api['description']
-                    })
+                    api_info.append(api)
             # check invalid api name
             if len(api_info) == 0:
-                print(f"[ERROR] cannot match api name: looking for '{api_name}'. Available APIs (original -> normalized): {available_api_names[:10]}...")
+                error_print(f"cannot match api name: looking for '{api_name}'. Available APIs (original -> normalized): {available_api_names[:10]}...")
                 # Return error response if API name cannot be matched
                 return {"error": f"Cannot match API name: '{api_name}'. Available APIs (first 5): {[name.split(' -> ')[1] for name in available_api_names[:5]]}", "response": ""}
             api_doc = {
@@ -211,11 +192,11 @@ async def get_virtual_response(request: Request, info: Info):
                 'api_info': api_info
             }
         else:
-            print(f"[ERROR] cannot get {tool_name_original}")
+            error_print(f"cannot get {tool_name_original}")
             # Return error response if tool file doesn't exist
             return {"error": f"Cannot find tool definition file for: {tool_name_original}", "response": ""}
     except Exception as e:
-        print(f"[ERROR] Loading api_doc error: {e}")
+        error_print(f"loading api_doc error: {e}")
         # Return error response if there's an exception loading api_doc
         return {"error": f"Error loading API documentation: {str(e)}", "response": ""}
 
@@ -231,10 +212,12 @@ async def get_virtual_response(request: Request, info: Info):
     if not api_doc.get('api_info') or len(api_doc['api_info']) == 0:
         return {"error": f"API information is empty for API: {api_name}", "response": ""}
     
-    print(f"[DEBUG] api example: {api_example},,, tool_input: {tool_input},,, api_doc: {api_doc},")
+    debug_print(f"api example: {api_example}")
+    debug_print(f"tool_input: {tool_input}")
+    debug_print(f"api_doc: {api_doc}")
         
     result = await fake_response_function_chat(api_example,tool_input,api_doc)
-    print(f"[DEBUG] fake result: {result}")
+    debug_print(f"fake result: {result}")
 
     if CONFIG['is_save']:
         await save_cache(cache, tool_input, result, standard_category, tool_name, api_name)
@@ -258,7 +241,7 @@ def is_valid_json(result):
         result = json.loads(result)
         return True
     except Exception as e:
-        print(f"[ERROR] Can not parse result into json: {result}")
+        error_print(f"Can not parse result into json: {result}")
         return False
 
 def check_result(processes_value: dict):
@@ -291,7 +274,7 @@ async def save_cache(cache, tool_input, result, standard_category, tool_name, ap
                 result_dict = json.loads(result)
                 cache[str(tool_input)] = result_dict
             except Exception as e:
-                print(f"[ERROR] Load result failed: {e}")
+                error_print(f"Load result failed: {e}")
                 return
 
         # Create directories if they don't exist
@@ -307,7 +290,7 @@ async def save_cache(cache, tool_input, result, standard_category, tool_name, ap
         async with aiofiles.open(cache_file_path, 'w') as f:
             await f.write(json.dumps(cache, indent=4))
     except Exception as e:
-        print(f"[ERROR] Save cache failed: {e}")
+        error_print(f"Save cache failed: {e}")
 
 async def fake_response_function_chat(api_example, tool_input, api_doc):
     '''
@@ -375,16 +358,16 @@ async def fake_response_function_chat(api_example, tool_input, api_doc):
             if is_valid_json(result):
                 flag = True
                 break
-            print(f"[WARN] Invalid JSON response on attempt {attempt + 1}. Retrying...")
+            warn_print(f"Invalid JSON response on attempt {attempt + 1}. Retrying...")
             await asyncio.sleep(1)  # Async sleep instead of time.sleep
         except Exception as e:
-            print(f"[ERROR] OpenAI API call failed on attempt {attempt + 1}: {e}")
+            error_print(f"OpenAI API call failed on attempt {attempt + 1}: {e}")
             if attempt < max_retries - 1:
                 await asyncio.sleep(1)
             else:
                 break
 
-    print(f"[DEBUG] result: {result}")
+    debug_print(f"result: {result}")
 
     if flag:
         return result
