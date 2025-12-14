@@ -12,14 +12,114 @@ test_cases = [
     {
         "name": "Test 1: Tokopedia - Get sorting methods (successful response)",
         "data": {
-            "category": "Data",
-            "tool_name": "fresh_linkedin_profile_data",
-            "api_name": "Get Open Profile Status",
-            "tool_input": json.dumps({"linkedin_url": "https://www.linkedin.com/in/williamhgates/"}),
+            "category": "eCommerce",
+            "tool_name": "tokopedia_super_api",
+            "api_name": "sortproductsmaster_for_tokopedia_super_api",
+            "tool_input": json.dumps({}),
             "strip": "",
             "toolbench_key": ""
         }
     },
+    {
+        "name": "Test 2: Qvantana - Ultimate Oscillator for BTCUSDT",
+        "data": {
+            "category": "Financial",
+            "tool_name": "qvantana",
+            "api_name": "ultimateoscillator_for_qvantana",
+            "tool_input": json.dumps({
+                "exchange": "binance",
+                "interval": "1d",
+                "market": "spot",
+                "symbol": "btcusdt",
+                "backtracks": 30
+            }),
+            "strip": "",
+            "toolbench_key": ""
+        }
+    },
+    {
+        "name": "Test 3: Qvantana - Typical Price for BTCUSDT",
+        "data": {
+            "category": "Financial",
+            "tool_name": "qvantana",
+            "api_name": "typical_price_for_qvantana",
+            "tool_input": json.dumps({
+                "exchange": "binance",
+                "market": "spot",
+                "symbol": "btcusdt",
+                "interval": "1d",
+                "backtracks": 30
+            }),
+            "strip": "",
+            "toolbench_key": ""
+        }
+    },
+    {
+        "name": "Test 4: Qvantana - Trix indicator for BTCUSDT",
+        "data": {
+            "category": "Financial",
+            "tool_name": "qvantana",
+            "api_name": "trix_for_qvantana",
+            "tool_input": json.dumps({
+                "exchange": "binance",
+                "market": "spot",
+                "symbol": "btcusdt",
+                "interval": "1d",
+                "backtracks": 30
+            }),
+            "strip": "",
+            "toolbench_key": ""
+        }
+    },
+    {
+        "name": "Test 5: Twelve Data - MAXINDEX for AAPL",
+        "data": {
+            "category": "Financial",
+            "tool_name": "twelve_data",
+            "api_name": "maxindex_for_twelve_data",
+            "tool_input": json.dumps({
+                "interval": "1day",
+                "symbol": "AAPL",
+                "series_type": "close",
+                "outputsize": 100
+            }),
+            "strip": "",
+            "toolbench_key": ""
+        }
+    },
+    {
+        "name": "Test 6: Twelve Data - MINMAX for AAPL",
+        "data": {
+            "category": "Financial",
+            "tool_name": "twelve_data",
+            "api_name": "minmax_for_twelve_data",
+            "tool_input": json.dumps({
+                "interval": "1day",
+                "symbol": "AAPL",
+                "series_type": "close",
+                "outputsize": 100
+            }),
+            "strip": "",
+            "toolbench_key": ""
+        }
+    },
+    {
+        "name": "Test 7: Twelve Data - TEMA for AAPL",
+        "data": {
+            "category": "Financial",
+            "tool_name": "twelve_data",
+            "api_name": "tema_for_twelve_data",
+            "tool_input": json.dumps({
+                "interval": "1day",
+                "symbol": "AAPL",
+                "series_type": "close",
+                "outputsize": 100,
+                "time_period": 14
+            }),
+            "strip": "",
+            "toolbench_key": ""
+        }
+    }
 ]
 
 def run_test(test_case):
