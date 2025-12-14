@@ -181,6 +181,7 @@ async def get_virtual_response(request: Request, info: Info):
     }
     try:
         tools_json_path = os.path.join(CONFIG['tools_folder'], standard_category, tool_name_original.split("_for_")[0]+".json")
+        print(f"[DEBUG] tools_json_path: {tools_json_path}")
         if os.path.exists(tools_json_path):
             # read json (async file I/O)
             async with aiofiles.open(tools_json_path, 'r') as f:
