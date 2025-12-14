@@ -356,6 +356,24 @@ async def fake_response_function_chat(api_example, tool_input, api_doc):
                 response_format={"type": "json_object"},
             )
             result = response.choices[0].message.content
+            
+            # Print token usage information
+            if hasattr(response, 'usage') and response.usage:
+                usage = response.usage
+                prompt_tokens = getattr(usage, 'prompt_tokens', 0)
+                completion_tokens = getattr(usage, 'completion_tokens', 0)
+                total_tokens = getattr(usage, 'total_tokens', 0)
+                
+                # Check for reasoning/thinking tokens (for reasoning models like o1, o3)
+                reasoning_tokens = getattr(usage, 'reasoning_tokens', None)
+                
+                if reasoning_tokens is not None:
+                    # For reasoning models: show reasoning tokens separately
+                    info_print(f"OpenAI API token usage - prompt: {prompt_tokens}, reasoning: {reasoning_tokens}, completion: {completion_tokens}, total: {total_tokens}")
+                else:
+                    # For standard models: show standard token usage
+                    info_print(f"OpenAI API token usage - prompt: {prompt_tokens}, completion: {completion_tokens}, total: {total_tokens}")
+            
             if "```json" in result:
                 result = result.replace("```json", "").replace("```", "").strip()
             if is_valid_json(result):
