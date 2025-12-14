@@ -365,7 +365,8 @@ async def fake_response_function_chat(api_example, tool_input, api_doc):
                 total_tokens = getattr(usage, 'total_tokens', 0)
                 
                 # Check for reasoning/thinking tokens (for reasoning models like o1, o3)
-                reasoning_tokens = getattr(usage, 'reasoning_tokens', None)
+                reasoning_tokens = getattr(usage, 'completion_tokens_details', None)
+                reasoning_tokens = getattr(reasoning_tokens, 'reasoning_tokens', None) if reasoning_tokens else None
                 
                 if reasoning_tokens is not None:
                     # For reasoning models: show reasoning tokens separately
