@@ -326,6 +326,10 @@ async def fake_response_function_chat(api_example, tool_input, api_doc):
             "error": "String describing the error (if any), otherwise empty string",
             "response": <The_Simulated_Response_Object_or_Null>
         }
+
+        ### 4. Behavior Rules
+        - **Length Constraints:** - Keep the response **concise and lightweight**. If the API returns a list or array, **limit it to maximum 2-3 items**.
+        - **Source of Truth:** Do not blindly copy "API Examples" if they contradict the "API Input". The "API Input" is your priority.
         """
     )
     system_prompt = {"role": "system", "content": system_prompt}
