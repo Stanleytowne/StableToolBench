@@ -42,6 +42,14 @@ def info_print(*args, **kwargs):
     """Print INFO messages in green"""
     print(f"{Fore.GREEN}[INFO]{Style.RESET_ALL}", *args, **kwargs)
 
+def is_reasoning_model(model_name):
+    """Check if the model is a reasoning model (o1, o3, etc.)"""
+    if not model_name:
+        return False
+    model_lower = model_name.lower()
+    # Reasoning models typically have 'o1' or 'o3' in their name
+    return 'o1' in model_lower or 'o3' in model_lower
+
 config_file='config.yml'
 CONFIG = yaml.load(open(config_file, 'r'), Loader=yaml.FullLoader)
 print(CONFIG)
@@ -346,15 +354,25 @@ async def fake_response_function_chat(api_example, tool_input, api_doc):
     max_retries = 3 
     flag = False
     result = None
+    model_name = CONFIG.get('model', '')
+    
+    # Prepare API call parameters based on model type
+    api_params = {
+        'model': model_name,
+        'messages': [system_prompt, user_prompt],
+        'temperature': CONFIG['temperature'],
+        'response_format': {"type": "json_object"},
+    }
+    
+    # Reasoning models (o1, o3) use max_completion_tokens instead of max_tokens
+    if is_reasoning_model(model_name):
+        api_params['max_completion_tokens'] = 1024
+    else:
+        api_params['max_tokens'] = 1024
+    
     for attempt in range(max_retries):
         try:
-            response = await client.chat.completions.create(
-                model = CONFIG['model'],
-                messages=[system_prompt, user_prompt],
-                max_tokens = 1024,
-                temperature=CONFIG['temperature'],
-                response_format={"type": "json_object"},
-            )
+            response = await client.chat.completions.create(**api_params)
             result = response.choices[0].message.content
             
             # Print token usage information
